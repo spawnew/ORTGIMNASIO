@@ -108,7 +108,7 @@ namespace GymMembershipApp.Controllers
             return View(attendance);
         }
 
-        // GET: Attendance/QuickCheckIn (for search-based check-in)
+        // GET: Attendance/QuickCheckIn
         public IActionResult QuickCheckIn()
         {
             return View();
@@ -116,12 +116,14 @@ namespace GymMembershipApp.Controllers
 
         // POST: Attendance/SearchMember
         [HttpPost]
-        public async Task<IActionResult> SearchMember(string searchTerm)
+        public async Task<IActionResult> SearchMember([FromBody] SearchRequest request)
         {
-            if (string.IsNullOrWhiteSpace(searchTerm))
+            if (request == null || string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 return Json(new { success = false, message = "Please enter a search term." });
             }
+
+            var searchTerm = request.SearchTerm.Trim();
 
             var members = await _context.Members
                 .Where(m => m.IsActive &&
@@ -132,7 +134,7 @@ namespace GymMembershipApp.Controllers
                 .Select(m => new
                 {
                     m.Id,
-                    m.FullName,
+                    FullName = m.FullName,
                     m.Email,
                     m.MembershipEndDate,
                     HasActiveMembership = m.MembershipEndDate >= DateTime.Today
@@ -143,12 +145,17 @@ namespace GymMembershipApp.Controllers
             return Json(new { success = true, members });
         }
 
+        public class SearchRequest
+        {
+            public string SearchTerm { get; set; } = string.Empty;
+        }
+
         // POST: Attendance/ProcessQuickCheckIn
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ProcessQuickCheckIn(int memberId)
+        public async Task<IActionResult> ProcessQuickCheckIn([FromBody] QuickCheckInRequest request)
         {
-            var member = await _context.Members.FindAsync(memberId);
+            var member = await _context.Members.FindAsync(request.MemberId);
             if (member == null || !member.IsActive)
             {
                 return Json(new { success = false, message = "Member not found or inactive." });
@@ -161,7 +168,7 @@ namespace GymMembershipApp.Controllers
 
             // Check if already checked in
             var existingCheckIn = await _context.Attendances
-                .FirstOrDefaultAsync(a => a.MemberId == memberId && a.CheckOutTime == null);
+                .FirstOrDefaultAsync(a => a.MemberId == request.MemberId && a.CheckOutTime == null);
 
             if (existingCheckIn != null)
             {
@@ -170,7 +177,7 @@ namespace GymMembershipApp.Controllers
 
             var attendance = new Attendance
             {
-                MemberId = memberId,
+                MemberId = request.MemberId,
                 CheckInTime = DateTime.Now
             };
 
@@ -183,6 +190,11 @@ namespace GymMembershipApp.Controllers
                 message = $"{member.FullName} checked in successfully!",
                 checkInTime = attendance.CheckInTime.ToString("HH:mm")
             });
+        }
+
+        public class QuickCheckInRequest
+        {
+            public int MemberId { get; set; }
         }
 
         // POST: Attendance/CheckOut/5

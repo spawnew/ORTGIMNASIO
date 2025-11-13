@@ -10,7 +10,8 @@
             <div class="card-body p-5">
                 <div class="mb-4">
                     <label for="searchBox" class="form-label h5">Search Member</label>
-                    <input type="text" id="searchBox" class="form-control form-control-lg" placeholder="Enter name, email, or phone number..." autocomplete="off" />
+                    <input type="text" id="searchBox" class="form-control form-control-lg"
+                        placeholder="Enter name, email, or phone number..." autocomplete="off" />
                     <small class="text-muted">Start typing to search for a member</small>
                 </div>
 
@@ -42,7 +43,7 @@
         const checkInMessage = document.getElementById('checkInMessage');
         let searchTimeout;
 
-        searchBox.addEventListener('input', function() {
+        searchBox.addEventListener('input', function () {
             clearTimeout(searchTimeout);
             const searchTerm = this.value.trim();
 
@@ -58,21 +59,21 @@
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(searchTerm)
+                    body: JSON.stringify({ SearchTerm: searchTerm })
                 })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success && data.members.length > 0) {
-                        displayResults(data.members);
-                    } else {
-                        searchResults.innerHTML = '<div class="list-group-item text-muted">No members found</div>';
-                        searchResults.style.display = 'block';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    showMessage('An error occurred while searching', 'danger');
-                });
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.members.length > 0) {
+                            displayResults(data.members);
+                        } else {
+                            searchResults.innerHTML = '<div class="list-group-item text-muted">No members found</div>';
+                            searchResults.style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMessage('An error occurred while searching', 'danger');
+                    });
             }, 300);
         });
 
@@ -85,9 +86,9 @@
 
                 const memberInfo = document.createElement('div');
                 memberInfo.innerHTML = `
-                    <strong>${member.fullName}</strong><br>
-                    <small class="text-muted">${member.email}</small>
-                `;
+                        <strong>${member.fullName}</strong><br>
+                        <small class="text-muted">${member.email}</small>
+                    `;
 
                 const badge = document.createElement('span');
                 if (member.hasActiveMembership) {
@@ -114,36 +115,31 @@
                 return;
             }
 
-            const formData = new FormData();
-            formData.append('memberId', memberId);
-
-            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
-            if (token) {
-                formData.append('__RequestVerificationToken', token);
-            }
+            const token = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
             fetch('/Attendance/ProcessQuickCheckIn', {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'RequestVerificationToken': token
                 },
-                body: formData
+                body: JSON.stringify({ memberId: memberId })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showMessage(data.message, 'success');
-                    searchBox.value = '';
-                    searchResults.style.display = 'none';
-                    searchResults.innerHTML = '';
-                } else {
-                    showMessage(data.message, 'danger');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showMessage('An error occurred during check-in', 'danger');
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showMessage(data.message, 'success');
+                        searchBox.value = '';
+                        searchResults.style.display = 'none';
+                        searchResults.innerHTML = '';
+                    } else {
+                        showMessage(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showMessage('An error occurred during check-in', 'danger');
+                });
         }
 
         function showMessage(message, type) {
