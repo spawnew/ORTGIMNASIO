@@ -120,5 +120,81 @@ namespace GymMembershipApp.Controllers
             var plan = await _context.MembershipPlans.FindAsync(id);
             return Json(plan?.Price ?? 0);
         }
+
+        // GET: Payments/DueMembers
+        public async Task<IActionResult> DueMembers()
+        {
+            var today = DateTime.Today;
+            var dueDate = today.AddDays(7);
+
+            var dueMembers = await _context.Members
+                .Include(m => m.MembershipPlan)
+                .Where(m => m.IsActive &&
+                            m.MembershipEndDate.HasValue &&
+                            m.MembershipEndDate >= today &&
+                            m.MembershipEndDate <= dueDate)
+                .OrderBy(m => m.MembershipEndDate)
+                .ToListAsync();
+
+            return View(dueMembers);
+        }
+
+        // GET: Payments/Pending
+        public async Task<IActionResult> Pending()
+        {
+            var pendingPayments = await _context.Payments
+                .Include(p => p.Member)
+                .Include(p => p.MembershipPlan)
+                .Where(p => p.Status == PaymentStatus.Pending)
+                .OrderByDescending(p => p.PaymentDate)
+                .ToListAsync();
+
+            return View(pendingPayments);
+        }
+
+        // POST: Payments/UpdateStatus
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateStatus(int id, PaymentStatus status)
+        {
+            var payment = await _context.Payments
+                .Include(p => p.Member)
+                .Include(p => p.MembershipPlan)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (payment == null)
+            {
+                return NotFound();
+            }
+
+            payment.Status = status;
+            _context.Update(payment);
+            await _context.SaveChangesAsync();
+
+            // If payment is completed and has a membership plan, update member's membership
+            if (status == PaymentStatus.Completed && payment.MembershipPlanId.HasValue)
+            {
+                var member = payment.Member;
+                var plan = payment.MembershipPlan;
+
+                if (member != null && plan != null)
+                {
+                    var startDate = member.MembershipEndDate.HasValue && member.MembershipEndDate > DateTime.Today
+                        ? member.MembershipEndDate.Value
+                        : DateTime.Today;
+
+                    member.MembershipPlanId = plan.Id;
+                    member.MembershipStartDate = startDate;
+                    member.MembershipEndDate = startDate.AddDays(plan.DurationInDays);
+                    member.IsActive = true;
+
+                    _context.Update(member);
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            TempData["SuccessMessage"] = $"Payment status updated to {status}";
+            return RedirectToAction(nameof(Pending));
+        }
     }
 }

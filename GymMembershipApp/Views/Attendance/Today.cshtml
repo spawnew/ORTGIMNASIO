@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Today's Attendance";
     var currentlyInGym = Model.Count(a => a.CheckOutTime == null);
+    var highlightMemberId = TempData["HighlightMemberId"] as int?;
 }
 
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -10,6 +11,14 @@
         <i class="bi bi-box-arrow-in-right"></i> Quick Check-In
     </a>
 </div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <!-- Statistics -->
 <div class="row g-3 mb-4">
@@ -54,7 +63,12 @@
                     {
                         @foreach (var attendance in Model)
                         {
-                            <tr class="@(attendance.CheckOutTime == null ? "table-success" : "")">
+                            var rowClass = attendance.CheckOutTime == null ? "table-success" : "";
+                            if (highlightMemberId.HasValue && attendance.MemberId == highlightMemberId.Value)
+                            {
+                                rowClass = "table-warning";
+                            }
+                            <tr class="@rowClass">
                                 <td>
                                     <strong>@attendance.Member.FullName</strong>
                                     <br />

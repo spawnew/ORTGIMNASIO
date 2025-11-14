@@ -3,8 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using GymMembershipApp.Data;
 using GymMembershipApp.Models;
 using System.Text.Json.Serialization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Set invariant culture for consistent number formatting
+var cultureInfo = new CultureInfo("en-US");
+CultureInfo.DefaultThreadCurrentCulture = cultureInfo;
+CultureInfo.DefaultThreadCurrentUICulture = cultureInfo;
 
 // Add services to the container.
 builder.Services.AddControllersWithViews()

@@ -128,10 +128,15 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        showMessage(data.message, 'success');
-                        searchBox.value = '';
-                        searchResults.style.display = 'none';
-                        searchResults.innerHTML = '';
+                        // Redirect to Today's attendance page
+                        if (data.redirectUrl) {
+                            window.location.href = data.redirectUrl;
+                        } else {
+                            showMessage(data.message, 'success');
+                            searchBox.value = '';
+                            searchResults.style.display = 'none';
+                            searchResults.innerHTML = '';
+                        }
                     } else {
                         showMessage(data.message, 'danger');
                     }

@@ -64,17 +64,10 @@
                     <td>@item.PaymentDate.ToString("dd/MM/yyyy HH:mm")</td>
                     <td>@item.Member.FullName</td>
                     <td>@(item.MembershipPlan?.Name ?? "-")</td>
-                    <td>@item.Amount.ToString("C")</td>
+                    <td><strong>$@item.Amount.ToString("0.00")</strong></td>
                     <td>@item.PaymentMethod</td>
                     <td>@item.Status</td>
                     <td>@(item.TransactionReference ?? "-")</td>
-                    <td>
-                        <div class="btn-group" role="group">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">
-                                <i class="fas fa-info-circle"></i>
-                            </a>
-                        </div>
-                    </td>
                 </tr>
             }
         </tbody>

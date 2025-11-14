@@ -194,7 +194,7 @@
                                 {
                                     <tr>
                                         <td>@payment.PaymentDate.ToString("MMM dd, yyyy")</td>
-                                        <td><strong>$@payment.Amount.ToString("N2")</strong></td>
+                                        <td><strong>$@payment.Amount.ToString("0.00")</strong></td>
                                         <td>@(payment.MembershipPlan?.Name ?? "N/A")</td>
                                         <td>@payment.PaymentMethod</td>
                                         <td>

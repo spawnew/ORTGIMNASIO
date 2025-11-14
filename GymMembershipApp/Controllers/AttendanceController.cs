@@ -101,7 +101,8 @@ namespace GymMembershipApp.Controllers
                 await _context.SaveChangesAsync();
 
                 TempData["SuccessMessage"] = $"{member.FullName} checked in successfully at {attendance.CheckInTime:HH:mm}";
-                return RedirectToAction(nameof(CheckIn));
+                TempData["HighlightMemberId"] = member.Id;
+                return RedirectToAction(nameof(Today));
             }
 
             ViewData["MemberId"] = new SelectList(_context.Members.Where(m => m.IsActive), "Id", "FullName", attendance.MemberId);
@@ -133,11 +134,11 @@ namespace GymMembershipApp.Controllers
                      m.PhoneNumber.Contains(searchTerm)))
                 .Select(m => new
                 {
-                    m.Id,
-                    FullName = m.FullName,
-                    m.Email,
-                    m.MembershipEndDate,
-                    HasActiveMembership = m.MembershipEndDate >= DateTime.Today
+                    id = m.Id,
+                    fullName = m.FullName,
+                    email = m.Email,
+                    membershipEndDate = m.MembershipEndDate,
+                    hasActiveMembership = m.MembershipEndDate >= DateTime.Today
                 })
                 .Take(10)
                 .ToListAsync();
@@ -184,11 +185,15 @@ namespace GymMembershipApp.Controllers
             _context.Add(attendance);
             await _context.SaveChangesAsync();
 
+            TempData["SuccessMessage"] = $"{member.FullName} checked in successfully at {attendance.CheckInTime:HH:mm}";
+            TempData["HighlightMemberId"] = member.Id;
+
             return Json(new
             {
                 success = true,
                 message = $"{member.FullName} checked in successfully!",
-                checkInTime = attendance.CheckInTime.ToString("HH:mm")
+                checkInTime = attendance.CheckInTime.ToString("HH:mm"),
+                redirectUrl = Url.Action(nameof(Today))
             });
         }
 
